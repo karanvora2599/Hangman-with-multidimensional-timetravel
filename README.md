@@ -1,4 +1,4 @@
-# Hangman with Multi-Dimensional Time-Travel — The Smart & Difficult Edition
+# Hangman with Multi-Dimensional Time-Travel: The Smart & Difficult Edition
 
 A CLI hangman game with an entropy-weighted adversarial AI, a character-level language model for difficulty scoring, and a **Multiverse Mode** where you travel between parallel timelines, each chasing a different hidden word.
 
