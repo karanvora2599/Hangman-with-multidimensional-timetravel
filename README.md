@@ -159,15 +159,36 @@ score       = 1000 × 0.6 + 0 + 60 = 660
 
 ## Multiverse Mode
 
+### The Story
+
+The Dark Tower stands at the center of all existence, its beams threading through infinite parallel worlds. Something has gone wrong.
+
+Innocents have been condemned across the timelines — each sentenced to hang unless their **True Name** is spoken before time runs out. You are the last **Gunslinger**, carrying five **Chronons** — shards of todash energy that let you walk between worlds, bend time backward, and branch into realities where the truth is different.
+
+Find the True Name. Free the innocent. The Tower watches. **Ka wills it.**
+
+Every run opens with a narrative intro. Guesses remaining have story beats ("The gallows creak in the wind", "Ka draws near, Gunslinger", "Last chance. The Tower grows impatient."). Win messages call the word a "True Name" and announce the prisoner's freedom. Loss messages read: *"The Tower claims every soul. Ka is a wheel."* Divergences between timelines are announced as **Reality Fractures**.
+
 ### Core Concept
 
-In Multiverse Mode every **timeline** is a completely independent parallel universe pursuing a **different hidden word**. When you time-travel — whether branching forward into a new universe or branching backward to an earlier moment — a **new timeline is always created**. Existing timelines are never mutated by travel commands.
+Every **timeline** is a completely independent parallel universe — a different reality where a different prisoner awaits judgment, each chasing a **different hidden word** (the prisoner's True Name). When you time-travel, a **new timeline is always created**. Existing timelines are never mutated by travel commands.
 
 Key rules:
-- Always **Nightmare** difficulty (5 wrong guesses per timeline).
+- All four difficulty tiers available (Easy → Nightmare).
+- Easy/Medium: each timeline has a **fixed word** chosen at creation — the AI does not shift it.
+- Hard/Nightmare: each timeline runs the full **adversarial Entropy AI** — the word shifts on every guess until cornered.
 - Up to **4 parallel timelines** at any time.
 - You start with **5 Chronons** — the time-travel energy resource.
-- The hidden word length is the same across all timelines (determined randomly at the start).
+- The word length is the same across all timelines (set at game start).
+
+### Difficulty in Multiverse
+
+| Tier | Guesses | Word type | Prisoners |
+|------|:-------:|-----------|-----------|
+| Easy | 8 | Fixed word, common | Wanderers and travelers |
+| Medium | 7 | Fixed word, uncommon | Outcasts between worlds |
+| Hard | 6 | Adversarial AI, rare | The cursed and forgotten |
+| Nightmare | 5 | Adversarial AI, very rare | The Tower's chosen sacrifices |
 
 ### Chronons
 
@@ -175,12 +196,11 @@ Chronons are spent on time-travel actions. You begin each game with **5 Chronons
 
 | Action | Cost |
 |--------|:----:|
-| `>b` branch from NOW (new word) | −2 |
-| `>r` Time Machine (pick any past state, same or new word) | −2 |
-| `>e` echo (peek at a letter) | −1 |
-| `>s` switch, `>x` collapse, `>h` hint | free\* |
-
-\* Hint costs 1 wrong guess in the active timeline, not chronons.
+| `>b` branch from NOW (different prisoner) | −2 |
+| `>r` Time Machine (any past moment, same or different prisoner) | −2 |
+| `>e` echo (peer through the thinny) | −1 |
+| `>s` switch, `>x` collapse | free |
+| `>h` hint (the Tower whispers a letter) | 1 wrong guess |
 
 Running out of chronons locks out all travel actions, but the game continues — you keep playing the surviving timelines with normal guesses.
 
@@ -191,16 +211,14 @@ All commands begin with `>`. Normal letters and words are guesses in the active 
 | Command | Cost | What it does |
 |---------|:----:|--------------|
 | `A`–`Z` | — | Guess a letter in the active timeline |
-| `WORD` | — | Full-word guess in the active timeline |
-| `>b` | −2 | **Quick branch** — fork from right now into a new universe with a different word |
-| `>r` | −2 | **Time Machine** — open a visual gallery of all past states; pick one, then choose same or different word |
-| `>s N` | free | Switch active timeline to timeline number N |
-| `>e L N` | −1 | **Echo** — preview what letter L would do in timeline N without guessing it |
-| `>x` | free | Collapse the active timeline (cannot collapse the last surviving one) |
-| `>h` | free* | Hint — force-reveal one letter (one per timeline, costs a wrong guess not a chronon) |
+| `WORD` | — | Guess the full True Name in the active timeline |
+| `>b` | −2 | **Branch** — step sideways through the thinny right now; same player state, different prisoner |
+| `>r` | −2 | **Time Machine** — walk the timestream; pick any past moment, choose same or different prisoner |
+| `>s N` | free | Shift focus to timeline N |
+| `>e L N` | −1 | **Echo** — peer through the thinny; preview letter L in timeline N without committing |
+| `>x` | free | Let this timeline fade into the todash (cannot collapse the last surviving one) |
+| `>h` | 1 wrong guess | The Tower whispers a letter — force-reveals one unrevealed position (once per TL) |
 | `>?` | free | Show the in-game help screen |
-
-\* Hint costs 1 wrong guess in the active timeline, not a chronon.
 
 #### Echo compact form
 
@@ -208,14 +226,16 @@ All commands begin with `>`. Normal letters and words are guesses in the active 
 
 ### The Two Branch Types
 
-#### `>b` — Quick branch from now
+#### `>b` — Branch (step sideways through the thinny)
 
-Instantly forks the active timeline from **the current moment** into a new universe with a **completely different hidden word**. The new timeline carries forward your current wrong count, all revealed positions, and all guessed letters — but the candidate pool is rebuilt fresh from the full nightmare word list, filtered so the new word is consistent with what you've already learned:
+Instantly forks the active timeline from **the current moment** into a parallel world with a **different prisoner** — a different hidden word. The new timeline carries forward your current wrong count, all revealed positions, and all guessed letters, but the word pool is rebuilt so the new prisoner's True Name is different:
 
-- Positions you've revealed must hold the same letters.
+- Positions you've revealed must hold the same letters in the new word.
 - Letters that were misses cannot appear in the new word.
 
-**When to use**: When you want to hedge quickly — the constraints transfer over, but the rest of the word is free to differ.
+For Easy/Medium (fixed-word mode) a new single word is picked. For Hard/Nightmare (adversarial mode) the full filtered pool is used.
+
+**When to use**: When you want to hedge quickly — same progress state, different word to chase in parallel.
 
 #### `>r` — The Time Machine
 
@@ -250,20 +270,20 @@ After picking a step you choose the branch type:
   [s/d] (Enter = cancel): _
 ```
 
-- **Same word (`s`)**: The new timeline resumes from the chosen past state with the same candidate pool that existed then. Use this to retry a different letter from an earlier point without losing your current TL's progress.
-- **New word (`d`)**: The new timeline starts from the chosen past state but with a freshly filtered candidate pool — a different word that still satisfies all constraints known at that step.
+- **Same prisoner (`s`)**: The new timeline resumes from the chosen past moment with the same candidate pool. Use this to retry a different letter from an earlier point without losing your current TL's progress.
+- **Different prisoner (`d`)**: The new timeline starts from the chosen past moment but with a freshly filtered pool — a different word (prisoner) that still satisfies all constraints known at that step.
 
-**When to use `>r` over `>b`**: When you want control over *which* past moment to fork from, not just the present. After several misses, you can jump back to an early clean state and try a completely different guessing strategy.
+**When to use `>r` over `>b`**: When you want control over *which* past moment to fork from, not just the present. After several misses, jump back to an early clean moment and try a completely different strategy — or fork with the same prisoner to explore an alternate path through the same word.
 
 #### Comparison
 
-| | `>b` quick branch | `>r` time machine |
+| | `>b` branch | `>r` time machine |
 |--|--|--|
-| Branch point | Always right now | Any past state you pick |
-| Word | Always different | Your choice: same or different |
+| Branch point | Always right now | Any past moment you pick |
+| Prisoner | Always different | Your choice: same or different |
 | Active TL | Unchanged | Unchanged |
 | Chronon cost | −2 | −2 |
-| Best for | Fast hedging | Strategic replays from any past moment |
+| Best for | Fast hedging | Strategic replays, alternate letter paths |
 
 ### The Time Machine (`>r`)
 
@@ -280,67 +300,79 @@ The gallery always includes a `[now]` panel showing the current live state, so y
 ### What the Multiverse Screen Shows
 
 ```
-  MULTIVERSE HANGMAN  |  Chronons [***..] |  Timelines: 3  (alive: 2)  W/L: 1/4
+  THE GUNSLINGER  |  Chronons [***..] |  Timelines: 3  (alive: 2)  Saved: 1/4  [NIGHTMARE]
 
-  ────────────────────────────────────────────────────────────
-  TL-A  [######] 5/5  pool:  0  [S Y Z Y G Y]   DEAD
-  TL-B  [##----] 2/5  pool: 12  [. . Z . . .]   ACTIVE
-  TL-C  [#-----] 1/5  pool: 19  [. . . . . .]
-  ────────────────────────────────────────────────────────────
+  TL-A  [######]  5/5  pool:  0   S Y Z Y G Y    FREED
+  TL-B  [##----]  2/5  pool: 12   . . Z . . .    ACTIVE
+  TL-C  [#-----]  1/5  pool: 19   . . . . . .
 
-  Active: TL-B  |  Nightmare | 6 letters
+  Active: TL-B  |  NIGHTMARE  |  True Name: 6 letters
 
-    +---+
-    |   |
-    O   |
-   /|   |
-        |
-        |
-  =========
-
+  Ka draws near, Gunslinger.
   Guesses left: 3
 
+  True Name:
   _ _ Z _ _ _
 
   A  B  C  D  E  F  G  H  I  J  K  L  M
   N  O  P  Q  R  S  T  U  V  W  X  Y  Z
 
-  >b branch(-2)  >r time-machine(-2)  >s N switch  >e L N echo(-1)  >x collapse  >h hint  >?
+  >b branch(-2)  >r timestream(-2)  >s N switch  >e L N echo(-1)  >x collapse  >h hint  >?
 
   TL-B > _
 ```
 
-**Overview table** (top section):
+**Overview header**: `Saved: W/P` shows how many games you've won this session; `[DIFF]` shows the current mission difficulty.
+
+**Overview table** rows:
 - `TL-X` — timeline label (A, B, C, D)
-- `[######]` — wrong-guess progress bar (6 chars, green→yellow→red)
-- `N/5` — wrong guesses / max wrong
-- `pool: N` — number of candidate words remaining in this TL
-- `[letters]` — revealed positions so far (`.` = unknown)
-- Status: `ACTIVE` (current), `DEAD` (exhausted), `SOLVED` (won)
+- `[######]` — wrong-guess progress bar (6 chars, green → yellow → red)
+- `N/M` — wrong guesses / max wrong (M varies by difficulty: 5, 6, 7, or 8)
+- `pool: N` — candidate words remaining (1 = fixed word in Easy/Medium; shrinks with adversarial AI in Hard/Nightmare)
+- Pattern — revealed letters (`.` = unknown)
+- Status: `ACTIVE`, `FREED` (won), `LOST` (dead)
+
+**Story beats** replace the plain "Guesses left" line with escalating tension:
+- Full health → no message
+- Past 40% → *"The gallows creak in the wind."*
+- Past 70% → *"Ka draws near, Gunslinger."*
+- 1 remaining → *"Last chance. The Tower grows impatient."*
 
 **Chronon bar** — `[***..] = 3 chronons remaining` (stars = available, dots = spent)
 
 ### Win & Loss Conditions
 
-**Win**: Fully reveal the word in ANY timeline. The game ends immediately — you do not need to solve all timelines.
-
-**Loss**: Every timeline reaches its wrong-guess limit (all timelines dead).
-
-When all timelines die simultaneously, one possible word from the first timeline is revealed (the adversarial AI may have had multiple candidates, so the exact word was never fully determined).
-
-### Divergence
-
-When you guess the same letter in two timelines but get different outcomes — a HIT in one and a MISS in another — the game announces a **Divergence**:
+**Win**: Speak the True Name in ANY timeline — fully reveal the word. The game ends immediately.
 
 ```
-  Divergence!  'E' is HIT in TL-B but TL-C: MISS
+  TRUE NAME FOUND.  TL-B freed.  Word: SYZYGY
+  The innocent goes free.  Ka wills it, Gunslinger.
 ```
 
-Divergences confirm that the hidden words are genuinely different between those two timelines. This is expected and intentional: it tells you something concrete about each universe's word.
+**Loss**: Every timeline reaches its wrong-guess limit.
 
-Use divergence information strategically:
-- A letter that is MISS in TL-C but HIT in TL-B means TL-C's word contains none of that letter.
-- Echo (`>e`) the diverged letter in a third timeline before guessing it there.
+```
+  ALL TIMELINES COLLAPSED.  The Tower claims every soul.
+  Ka is a wheel.  It always comes around.
+  (One possible True Name was: SYZYGY)
+```
+
+When all timelines collapse in adversarial mode, one candidate word is shown — the exact word was never locked in, so this is only one possibility of what the Tower had in mind.
+
+### Reality Fractures
+
+When you guess the same letter in two timelines and get opposite outcomes — TRUE in one, VOID in another — the game announces a **Reality Fracture**:
+
+```
+  REALITY FRACTURE!  'E' rings TRUE in TL-B but TL-C: VOID.
+  These worlds have diverged.  Different truths hold in different realities.
+```
+
+Fractures confirm that the hidden words are genuinely different across those timelines. This is the multiverse working as intended — each universe has its own truth, and the Gunslinger must track them separately.
+
+Use fracture information strategically:
+- A letter that is VOID in TL-C but TRUE in TL-B means TL-C's word contains none of that letter.
+- Echo (`>e`) the fractured letter in a third timeline before guessing it there.
 
 ### Multiverse Scoring
 
@@ -503,30 +535,35 @@ The AI reassigns the word on each guess. Counter-intuitive strategies:
 - **Full-word guess when pool is small** — if pool ≤ 3 and you can narrow it down by logic, a correct word guess wins immediately without spending more wrong-guess budget.
 - **The hint trick** — `H` costs a wrong guess but reveals a letter the AI has to commit to. On Nightmare with 5 guesses, spend the hint on your second turn (when pool is still large) to lock in one letter position.
 
+### Multiverse — Choosing Your Mission
+
+**Easy / Medium** (fixed-word): each timeline has a locked word from the start. Reality fractures are guaranteed when the same letter is absent in one word and present in another. You can use the Time Machine to replay from any moment with the same word — knowing exactly what you're returning to.
+
+**Hard / Nightmare** (adversarial): the word shifts on each guess. Fractures can emerge from the AI making different choices in different timelines, not just from different underlying words. The pool counter in the overview tells you how many words remain — watch for it to shrink toward 1, which locks the word in.
+
 ### Multiverse — Chronon Budget
 
-You have 5 chronons. Optimal general budget:
-```
-Turn 1–2:  guess letters freely (observe the pool, look for divergence potential)
-Turn 3:    use >e to echo promising letters across timelines (-1 each)
-Turn 4–5:  branch or rewind-branch if a timeline looks hopeless (-2 each)
-End-game:  collapse dead timelines with >x to keep the scoreboard clean
-```
+You start each mission with **5 Chronons**. Spending all of them earns a ×1.25 score multiplier — don't hoard.
 
-Spending all 5 chronons earns ×1.25 on your final score — don't hoard them.
+```
+Turn 1–2:  guess letters freely; note pool sizes and watch for reality fractures
+Turn 3:    use >e to echo a promising letter across other timelines (-1 each)
+Turn 4–5:  branch or time-travel if a timeline looks hopeless (-2 each)
+End-game:  collapse lost timelines with >x to keep the board readable
+```
 
 ### Multiverse — Branch vs. Time Machine
 
-**Quick branch (`>b`)** is best when:
-- You want to fork immediately without thinking about which past state to pick.
-- You've made progress (revealed letters, narrowed the pool) and want a parallel universe with those same constraints but a fresh word.
+**Branch (`>b`)** is best when:
+- You want to act quickly without reviewing history.
+- You've made progress (some letters revealed) and want a fresh prisoner with those constraints baked in.
 - You need a second timeline fast to hit the timeline multiplier.
 
 **Time Machine (`>r`)** is best when:
-- You want to replay from a specific earlier state — not just 1 step back but any step.
-- You just had a run of misses and want to restart from before they happened.
-- You want to branch with the *same* word to try a different letter path rather than getting a new word entirely.
-- You have time and chronons to think strategically: inspect the gallery, pick the cleanest state, choose same/different word deliberately.
+- You want to replay from a specific past moment — not just 1 step back.
+- You just had a string of misses and want to restart before they happened.
+- You want to branch with the *same prisoner* to try a different letter path on the same word.
+- You have time to inspect the gallery, weigh the options, and make a deliberate choice.
 
 ### Multiverse — Echo Strategy
 

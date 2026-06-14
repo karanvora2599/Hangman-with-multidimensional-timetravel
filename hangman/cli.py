@@ -36,6 +36,24 @@ def choose_diff():
         print(f"  {C.RED}Enter 1, 2, 3, or 4.{C.RST}")
 
 
+def choose_multiverse_diff():
+    print(f"\n{C.MAG}{C.BLD}  THE GUNSLINGER{C.RST}")
+    print(f"  {'-' * 46}")
+    print(f"\n  {C.DIM}The Tower has condemned innocents across parallel timelines.")
+    print(f"  Choose the weight of Ka -- how hard the Tower fights back:{C.RST}\n")
+    print(f"  {C.GRN}[1] Easy       {C.RST}8 guesses  |  common words    |  wanderers and travelers")
+    print(f"  {C.YLW}[2] Medium     {C.RST}7 guesses  |  uncommon words  |  outcasts between worlds")
+    print(f"  {C.RED}[3] Hard       {C.RST}6 guesses  |  rare words      |  the cursed  +  {C.MAG}Entropy AI{C.RST}")
+    print(f"  {C.MAG}[4] Nightmare  {C.RST}5 guesses  |  very rare       |  the Tower's chosen  +  {C.MAG}Entropy AI{C.RST}")
+    print(f"\n  {C.DIM}All missions: each timeline pursues a different True Name.")
+    print(f"  Hard & Nightmare: the word shifts until cornered by the AI.{C.RST}")
+    while True:
+        ch = input(f"\n  Mission [1-4]: ").strip()
+        if ch in '1234':
+            return ['easy', 'medium', 'hard', 'nightmare'][int(ch) - 1]
+        print(f"  {C.RED}Enter 1, 2, 3, or 4.{C.RST}")
+
+
 def main():
     if os.name == 'nt':
         os.system('')   # enable ANSI escape codes on Windows
@@ -64,8 +82,8 @@ def main():
             input(f"\n  {C.DIM}[Enter to start]{C.RST}")
             session_score, won = play(diff, pool, model, session_score, wins, played)
         else:
-            input(f"\n  {C.DIM}[Enter to enter the multiverse]{C.RST}")
-            session_score, won = play_multiverse(pool, model, session_score, wins, played)
+            diff = choose_multiverse_diff()
+            session_score, won = play_multiverse(pool, model, session_score, wins, played, diff)
 
         played += 1
         wins   += won
