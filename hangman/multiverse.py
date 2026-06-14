@@ -1,4 +1,4 @@
-"""Multiverse Hangman — time-travel across parallel adversarial universes."""
+"""Multiverse Hangman -- time-travel across parallel adversarial universes."""
 
 import random
 from collections import Counter
@@ -39,12 +39,12 @@ class Timeline:
         candidates : word pool for this timeline (already filtered if branching)
         max_wrong  : wrong-guess limit
         state      : optional dict {wrong, revealed, guessed, hits} to inherit
-                     — used when forking from an existing timeline's state
+                     -- used when forking from an existing timeline's state
         """
         self.num, self.label = Timeline._alloc()
         self.candidates = list(candidates)
         self.max_wrong  = max_wrong
-        self.history    = []       # undo stack — each entry is a full state snapshot
+        self.history    = []       # undo stack -- each entry is a full state snapshot
         self.echo_log   = set()    # letters already echoed in this TL (one-shot)
         self.alive      = True
 
@@ -97,7 +97,7 @@ class Timeline:
         return col + '#' * filled + C.DIM + '-' * (width - filled) + C.RST
 
 
-# ── Helper functions ──────────────────────────────────────────────────────────
+# -- Helper functions ----------------------------------------------------------
 
 def _branch_pool(nightmare_pool, word_len, parent):
     """
@@ -107,7 +107,7 @@ def _branch_pool(nightmare_pool, word_len, parent):
     state: hits must appear at revealed positions, miss-letters must not
     appear anywhere.  Because the pool is rebuilt from scratch (not copied
     from parent.candidates), the resulting hidden word is almost certainly
-    different — a true parallel universe.
+    different -- a true parallel universe.
     """
     misses   = parent.guessed - parent.hits
     filtered = [
@@ -138,7 +138,7 @@ def _mv_overview(timelines, active_idx, chronons, word_len, wins=0, played=0):
             return
 
     # ANSI fallback
-    print(f"  {'─' * 60}")
+    print(f"  {'-' * 60}")
     for i, tl in enumerate(timelines):
         pattern = ''
         for p in range(word_len):
@@ -169,7 +169,7 @@ def _mv_overview(timelines, active_idx, chronons, word_len, wins=0, played=0):
               f"  [{pattern}]"
               f"  {status_col}{status_txt}{C.RST}")
 
-    print(f"  {'─' * 60}")
+    print(f"  {'-' * 60}")
 
 
 def _mv_help():
@@ -179,20 +179,20 @@ def _mv_help():
   {C.WHT}[letter]      {C.RST}Guess a letter in the ACTIVE timeline
   {C.WHT}[word]        {C.RST}Full-word guess in the active timeline
 
-  {C.MAG}>b            {C.RST}Branch  — spawn a parallel universe RIGHT NOW.
+  {C.MAG}>b            {C.RST}Branch  -- spawn a parallel universe RIGHT NOW.
                   New TL inherits your wrong-count and revealed
                   letters, but chases a DIFFERENT word.  {C.DIM}(-2 chronons){C.RST}
 
-  {C.CYN}>r            {C.RST}Rewind  — spawn a NEW timeline branched from 1 guess
+  {C.CYN}>r            {C.RST}Rewind  -- spawn a NEW timeline branched from 1 guess
                   ago in the active TL.  Active TL stays unchanged.
                   Same word pool, earlier state.  {C.DIM}(-2 chronons){C.RST}
 
-  {C.WHT}>s N          {C.RST}Switch  — make timeline N the active one  (free)
-  {C.WHT}>e L N        {C.RST}Echo    — peek: what would happen if you guessed letter
+  {C.WHT}>s N          {C.RST}Switch  -- make timeline N the active one  (free)
+  {C.WHT}>e L N        {C.RST}Echo    -- peek: what would happen if you guessed letter
                   L in timeline N?  Reports HIT/MISS + pool change.
                   Each letter can only be echoed once per TL.  {C.DIM}(-1 chronon){C.RST}
-  {C.WHT}>x            {C.RST}Collapse — abandon the active timeline  (free)
-  {C.WHT}>h            {C.RST}Hint    — force-reveal one letter  (costs 1 wrong guess)
+  {C.WHT}>x            {C.RST}Collapse -- abandon the active timeline  (free)
+  {C.WHT}>h            {C.RST}Hint    -- force-reveal one letter  (costs 1 wrong guess)
   {C.WHT}>?            {C.RST}Show this help screen
 
   {C.DIM}Win : solve ANY timeline.
@@ -204,7 +204,7 @@ def _mv_help():
 
 def play_multiverse(pool, model, session_score, wins, played):
     """
-    Multidimensional time-travel hangman — always Nightmare difficulty.
+    Multidimensional time-travel hangman -- always Nightmare difficulty.
 
     Every time-travel action (>b or >r) creates a NEW branch; no timeline
     is ever mutated by a time-travel command.  Only forward guesses mutate
@@ -237,7 +237,7 @@ def play_multiverse(pool, model, session_score, wins, played):
         clr()
         tl = atl()
 
-        # ── Victory ───────────────────────────────────────────────────────────
+        # -- Victory -----------------------------------------------------------
         won_tl = next((t for t in timelines if t.solved), None)
         if won_tl:
             final = ''.join(won_tl.revealed.get(i, '?') for i in range(word_len))
@@ -262,12 +262,12 @@ def play_multiverse(pool, model, session_score, wins, played):
             input(f"\n  {C.DIM}[Enter to continue]{C.RST}")
             return session_score, True
 
-        # ── Mark dead ─────────────────────────────────────────────────────────
+        # -- Mark dead ---------------------------------------------------------
         for t in timelines:
             if t.dead:
                 t.alive = False
 
-        # ── Loss ──────────────────────────────────────────────────────────────
+        # -- Loss --------------------------------------------------------------
         if all(not t.alive for t in timelines):
             rev_word = (timelines[0].candidates[0][0]
                         if timelines[0].candidates else '?' * word_len)
@@ -282,7 +282,7 @@ def play_multiverse(pool, model, session_score, wins, played):
             input(f"\n  {C.DIM}[Enter to continue]{C.RST}")
             return session_score, False
 
-        # ── Auto-switch away from dead TL ─────────────────────────────────────
+        # -- Auto-switch away from dead TL -------------------------------------
         if not tl.alive:
             for i, t in enumerate(timelines):
                 if t.alive:
@@ -290,7 +290,7 @@ def play_multiverse(pool, model, session_score, wins, played):
                     tl = t
                     break
 
-        # ── Render ────────────────────────────────────────────────────────────
+        # -- Render ------------------------------------------------------------
         _mv_overview(timelines, active_idx, chronons, word_len, wins, played)
         print(f"\n  {C.BLD}Active: TL-{tl.label}{C.RST}  "
               f"{C.DIM}Nightmare | {word_len} letters{C.RST}\n")
@@ -305,10 +305,10 @@ def play_multiverse(pool, model, session_score, wins, played):
 
         ch_str = '*' * chronons + '.' * max(0, 5 - chronons)
         toolbar = (
-            f'<b>Score:</b> {session_score} &nbsp;|&nbsp; '
-            f'<b>W/L:</b> {wins}/{played} &nbsp;|&nbsp; '
-            f'<b>TL-{tl.label}</b> &nbsp;|&nbsp; '
-            f'<ansimagenta>&#8987; {ch_str} ({chronons})</ansimagenta> &nbsp;|&nbsp; '
+            f'<b>Score:</b> {session_score}  |  '
+            f'<b>W/L:</b> {wins}/{played}  |  '
+            f'<b>TL-{tl.label}</b>  |  '
+            f'<ansimagenta>&#8987; {ch_str} ({chronons})</ansimagenta>  |  '
             f'Tab: &gt;b &gt;r &gt;s &gt;e &gt;x &gt;h'
         )
         raw = game_prompt(
@@ -319,19 +319,19 @@ def play_multiverse(pool, model, session_score, wins, played):
         if not raw:
             continue
 
-        # ── > commands ────────────────────────────────────────────────────────
+        # -- > commands --------------------------------------------------------
         if raw.startswith('>'):
             cmd = raw[1:].strip()
 
             if cmd in ('?', 'HELP'):
                 _mv_help()
 
-            # >b — new parallel universe: same state, fresh word
+            # >b -- new parallel universe: same state, fresh word
             elif cmd == 'B':
                 if chronons < 2:
                     flash(f"{C.RED}Need 2 chronons to branch (have {chronons}).{C.RST}")
                 elif len(timelines) >= 4:
-                    flash(f"{C.RED}Multiverse at capacity — max 4 timelines.{C.RST}")
+                    flash(f"{C.RED}Multiverse at capacity -- max 4 timelines.{C.RST}")
                 else:
                     new_pool = _branch_pool(nightmare_pool, word_len, tl)
                     new_tl   = Timeline(new_pool, max_wrong, state=tl.state_dict())
@@ -341,18 +341,18 @@ def play_multiverse(pool, model, session_score, wins, played):
                           f"TL-{new_tl.label} forked from TL-{tl.label}.  "
                           f"Same player state, DIFFERENT word.  "
                           f"{C.DIM}Pool: {len(new_pool)} candidates.  "
-                          f"(-2 chronons → {chronons} left){C.RST}")
+                          f"(-2 chronons -> {chronons} left){C.RST}")
 
-            # >r — time-branch from 1 guess ago: same word, earlier state
+            # >r -- time-branch from 1 guess ago: same word, earlier state
             elif cmd == 'R':
                 if chronons < 2:
                     flash(f"{C.RED}Need 2 chronons to time-branch (have {chronons}).{C.RST}")
                 elif len(timelines) >= 4:
-                    flash(f"{C.RED}Multiverse at capacity — max 4 timelines.{C.RST}")
+                    flash(f"{C.RED}Multiverse at capacity -- max 4 timelines.{C.RST}")
                 elif not tl.history:
                     flash(f"{C.YLW}TL-{tl.label} has no history yet.{C.RST}")
                 else:
-                    snap   = tl.history[-1]    # peek — current TL stays unchanged
+                    snap   = tl.history[-1]    # peek -- current TL stays unchanged
                     new_tl = Timeline(list(snap['candidates']), max_wrong, state={
                         'wrong':    snap['wrong'],
                         'revealed': dict(snap['revealed']),
@@ -363,10 +363,10 @@ def play_multiverse(pool, model, session_score, wins, played):
                     chronons -= 2
                     flash(f"{C.CYN}Time-branch!{C.RST}  "
                           f"TL-{new_tl.label} forked from 1 guess ago in TL-{tl.label}.  "
-                          f"Same word, earlier state — TL-{tl.label} is untouched.  "
-                          f"{C.DIM}(-2 chronons → {chronons} left){C.RST}")
+                          f"Same word, earlier state -- TL-{tl.label} is untouched.  "
+                          f"{C.DIM}(-2 chronons -> {chronons} left){C.RST}")
 
-            # >s N — switch active timeline
+            # >s N -- switch active timeline
             elif cmd.startswith('S'):
                 try:
                     n = int(cmd[1:].strip()) - 1
@@ -379,7 +379,7 @@ def play_multiverse(pool, model, session_score, wins, played):
                 except ValueError:
                     flash(f"{C.RED}Usage: >s 2  (switch to timeline 2){C.RST}")
 
-            # >e L N — echo: peek at letter L in timeline N
+            # >e L N -- echo: peek at letter L in timeline N
             elif cmd.startswith('E'):
                 parts = cmd[1:].split()
                 try:
@@ -401,7 +401,7 @@ def play_multiverse(pool, model, session_score, wins, played):
                         outcome = (f"{C.GRN}HIT{C.RST}" if el in target.hits
                                    else f"{C.RED}MISS{C.RST}")
                         flash(f"Echo {C.BLD}{el}{C.RST} in TL-{target.label}: "
-                              f"{outcome}  (already guessed — free info)")
+                              f"{outcome}  (already guessed -- free info)")
                     elif el in target.echo_log:
                         flash(f"{C.YLW}{el} already echoed in TL-{target.label}; "
                               f"each letter can only be echoed once per TL.{C.RST}")
@@ -413,15 +413,15 @@ def play_multiverse(pool, model, session_score, wins, played):
                         positions, survivors = evil_guess(el, target.candidates,
                                                           target.revealed)
                         result = f"{C.GRN}HIT{C.RST}" if positions else f"{C.RED}MISS{C.RST}"
-                        delta  = f"{len(target.candidates)} → {len(survivors)}"
+                        delta  = f"{len(target.candidates)} -> {len(survivors)}"
                         flash(f"Echo {C.BLD}{el}{C.RST} in TL-{target.label}: "
                               f"{result}  {C.DIM}(pool {delta})  "
-                              f"(-1 chronon → {chronons} left){C.RST}")
+                              f"(-1 chronon -> {chronons} left){C.RST}")
                 except (ValueError, IndexError):
                     flash(f"{C.RED}Usage: >e A 2  or  >eA2  "
                           f"(echo letter A in timeline 2){C.RST}")
 
-            # >x — collapse active timeline
+            # >x -- collapse active timeline
             elif cmd == 'X':
                 if sum(1 for t in timelines if t.alive) <= 1:
                     flash(f"{C.RED}Cannot collapse the last surviving timeline.{C.RST}")
@@ -429,7 +429,7 @@ def play_multiverse(pool, model, session_score, wins, played):
                     tl.alive = False
                     flash(f"{C.YLW}TL-{tl.label} collapsed.{C.RST}")
 
-            # >h — hint (force-reveal one letter, costs 1 wrong guess)
+            # >h -- hint (force-reveal one letter, costs 1 wrong guess)
             elif cmd == 'H':
                 if tl.num in hint_used:
                     flash(f"{C.YLW}Hint already used in TL-{tl.label}.{C.RST}")
@@ -452,7 +452,7 @@ def play_multiverse(pool, model, session_score, wins, played):
             else:
                 flash(f"{C.RED}Unknown command '{raw}'. Type >? for help.{C.RST}")
 
-        # ── Full-word guess ───────────────────────────────────────────────────
+        # -- Full-word guess ---------------------------------------------------
         elif len(raw) > 1 and raw.isalpha():
             tl.snapshot()
             target_word = tl.candidates[0][0] if tl.candidates else ''
@@ -466,7 +466,7 @@ def play_multiverse(pool, model, session_score, wins, played):
                 if filtered:
                     tl.candidates = filtered
 
-        # ── Single letter guess ───────────────────────────────────────────────
+        # -- Single letter guess -----------------------------------------------
         elif len(raw) == 1 and raw.isalpha():
             if raw in tl.guessed:
                 continue

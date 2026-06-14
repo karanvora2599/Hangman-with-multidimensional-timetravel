@@ -11,10 +11,10 @@ from .multiverse import play_multiverse
 
 def choose_mode():
     print(f"\n{C.CYN}  Select mode:{C.RST}")
-    print(f"  {C.WHT}[1] Classic       {C.RST}Standard hangman  (Easy → Nightmare)")
+    print(f"  {C.WHT}[1] Classic       {C.RST}Standard hangman  (Easy -> Nightmare)")
     print(f"  {C.MAG}[2] Multiverse    {C.RST}Time-travel across parallel universes")
     print(f"\n  {C.DIM}Multiverse: branch timelines, rewind turns, echo letters across dimensions.")
-    print(f"  Every timeline chases a DIFFERENT word — nightmare difficulty only.{C.RST}")
+    print(f"  Every timeline chases a DIFFERENT word -- nightmare difficulty only.{C.RST}")
     while True:
         ch = input(f"\n  Mode [1-2]: ").strip()
         if ch in '12':

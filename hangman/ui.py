@@ -11,7 +11,7 @@ HAS_PT   = False
 console  = None       # Rich Console, or None
 MV_COMPLETER = None   # prompt_toolkit completer for multiverse commands
 
-# ── Rich ─────────────────────────────────────────────────────────────────────
+# -- Rich ---------------------------------------------------------------------
 try:
     from rich.console import Console
     HAS_RICH = True
@@ -19,7 +19,7 @@ try:
 except ImportError:
     pass
 
-# ── prompt_toolkit ────────────────────────────────────────────────────────────
+# -- prompt_toolkit ------------------------------------------------------------
 _pt_prompt   = None
 _history     = None
 _HTML        = None
@@ -61,11 +61,11 @@ def game_prompt(label, *, toolbar=None, completer=None):
         except (EOFError, KeyboardInterrupt):
             raise KeyboardInterrupt
         except Exception:
-            pass        # unexpected terminal issue → fall through to input()
+            pass        # unexpected terminal issue -> fall through to input()
     return input(label)
 
 
-# ── Rich helpers ──────────────────────────────────────────────────────────────
+# -- Rich helpers --------------------------------------------------------------
 
 def mv_table(timelines, active_idx, word_len):
     """
@@ -94,7 +94,7 @@ def mv_table(timelines, active_idx, word_len):
     table.add_column(width=8)                  # status
 
     for i, tl in enumerate(timelines):
-        # ── Pattern ──────────────────────────────────────────────────────────
+        # -- Pattern ----------------------------------------------------------
         pattern = Text()
         for p in range(word_len):
             if p in tl.revealed:
@@ -106,7 +106,7 @@ def mv_table(timelines, active_idx, word_len):
             if p < word_len - 1:
                 pattern.append(' ')
 
-        # ── Status ────────────────────────────────────────────────────────────
+        # -- Status ------------------------------------------------------------
         if tl.solved:
             status, st_style = 'SOLVED', 'bold green'
         elif tl.dead:
@@ -116,12 +116,12 @@ def mv_table(timelines, active_idx, word_len):
         else:
             status, st_style = '', 'dim'
 
-        # ── Label ─────────────────────────────────────────────────────────────
+        # -- Label -------------------------------------------------------------
         tl_style = ('bold cyan' if i == active_idx else
                     'green'     if tl.solved        else
                     'red dim'   if tl.dead          else 'white')
 
-        # ── Progress bar ──────────────────────────────────────────────────────
+        # -- Progress bar ------------------------------------------------------
         filled    = round(tl.wrong / tl.max_wrong * 6)
         bar_inner = ('bold red' if tl.dead else
                      'red'       if filled >= 4 else

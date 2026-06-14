@@ -100,7 +100,7 @@ FALLBACK = {
         ('WIDDERSHINS',    'Directions'), ('ZYMURGY',        'Sciences'),
     ],
     'nightmare': [
-        # ── Vowel-starved / consonant clusters ───────────────────────────────
+        # -- Vowel-starved / consonant clusters -------------------------------
         ('CRWTH',        'Music'),         ('GLYPH',        'Typography'),
         ('LYMPH',        'Biology'),       ('MYRRH',        'Substances'),
         ('NYMPH',        'Mythology'),     ('PSYCH',        'Actions'),
@@ -114,7 +114,7 @@ FALLBACK = {
         ('WHELK',        'Marine'),        ('XYLYL',        'Chemistry'),
         ('WALTZ',        'Dance'),         ('GLITZ',        'Entertainment'),
         ('BORAX',        'Chemistry'),     ('TOPAZ',        'Minerals'),
-        # ── 6-letter unusual clusters ─────────────────────────────────────────
+        # -- 6-letter unusual clusters -----------------------------------------
         ('BROUHAHA',     'Events'),        ('BULWARK',      'Architecture'),
         ('CZAR',         'Titles'),        ('FJORD',        'Geography'),
         ('GEWGAW',       'Objects'),       ('GNARLY',       'Adjectives'),
@@ -132,7 +132,7 @@ FALLBACK = {
         ('KLUDGE',       'Computing'),     ('SCHLEP',       'Actions'),
         ('KLUTZY',       'Adjectives'),    ('SPLOTCH',      'Patterns'),
         ('SQUELCH',      'Sounds'),        ('BLOTCH',       'Patterns'),
-        # ── 7-letter ──────────────────────────────────────────────────────────
+        # -- 7-letter ----------------------------------------------------------
         ('COXSWAIN',     'Nautical'),      ('GYPSY',        'People'),
         ('KNICKKNACK',   'Objects'),       ('SCHNOZZLE',    'Anatomy'),
         ('ZEITGEIST',    'Philosophy'),    ('CZARINA',      'Titles'),
@@ -147,7 +147,7 @@ FALLBACK = {
         ('PSYCHICS',     'Supernatural'),  ('GRAPHIC',      'Art'),
         ('WYVERNS',      'Fantasy'),       ('KVETCHY',      'Adjectives'),
         ('SPLOTCHY',     'Adjectives'),    ('FLUXION',      'Mathematics'),
-        # ── 8-letter ──────────────────────────────────────────────────────────
+        # -- 8-letter ----------------------------------------------------------
         ('VUVUZELA',     'Music'),         ('RAZZMATAZZ',   'Entertainment'),
         ('QUIXOTIC',     'Philosophy'),    ('JUXTAPOSE',    'Actions'),
         ('BROUGHAM',     'Transport'),     ('GLYCOGEN',     'Biochemistry'),
@@ -160,12 +160,12 @@ FALLBACK = {
         ('GLYCEROL',     'Chemistry'),     ('SYLVATIC',     'Ecology'),
         ('PHTHISIS',     'Medicine'),      ('CHTHONIAN',    'Mythology'),
         ('SYZYGIES',     'Astronomy'),     ('COXSWAINS',    'Nautical'),
-        # ── 9-letter ──────────────────────────────────────────────────────────
+        # -- 9-letter ----------------------------------------------------------
         ('CHRYSALIS',    'Entomology'),    ('GYMNASIUM',    'Architecture'),
         ('LYMPHATIC',    'Anatomy'),       ('PNEUMONIA',    'Medicine'),
         ('SYNAGOGUE',    'Architecture'),  ('XYLOPHONE',    'Music'),
         ('SCHMALTZIER',  'Cooking'),
-        # ── 10+ letters ───────────────────────────────────────────────────────
+        # -- 10+ letters -------------------------------------------------------
         ('ARCHIPELAGO',  'Geography'),     ('TRYPTOPHAN',   'Biochemistry'),
         ('ZYMOTIC',      'Medicine'),      ('DIPHTHERIA',   'Medicine'),
         ('ONOMATOPOEIA', 'Linguistics'),   ('PHYSIOGNOMY',  'Science'),

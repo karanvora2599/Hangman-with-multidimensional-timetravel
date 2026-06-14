@@ -60,8 +60,8 @@ class CharNgramModel:
     def perplexity(self, word):
         """
         Character-level perplexity.
-        Lower  → predictable spelling → easier to guess.
-        Higher → surprising spelling  → harder to guess.
+        Lower  -> predictable spelling -> easier to guess.
+        Higher -> surprising spelling  -> harder to guess.
         """
         return 2 ** (-self._avg_log_prob(word))
 

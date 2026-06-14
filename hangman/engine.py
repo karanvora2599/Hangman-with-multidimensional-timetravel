@@ -8,14 +8,14 @@ from .colors import C
 from .words import STAGES
 
 
-# ── Adversarial AI ────────────────────────────────────────────────────────────
+# -- Adversarial AI ------------------------------------------------------------
 
 def positional_entropy(candidates, revealed_pos):
     """
     Average Shannon entropy of letter distributions at unrevealed positions.
 
-    High entropy → player can't predict which letter comes next → harder.
-    Low entropy  → one letter dominates most positions → easy to guess.
+    High entropy -> player can't predict which letter comes next -> harder.
+    Low entropy  -> one letter dominates most positions -> easy to guess.
     """
     n = len(candidates)
     if n <= 1:
@@ -37,7 +37,7 @@ def evil_guess(letter, candidates, revealed):
     Entropy-weighted adversarial partition.
 
     For each partition produced by guessing `letter`, score:
-        (pool_size × (1 + positional_entropy),   # primary
+        (pool_size x (1 + positional_entropy),   # primary
          pool_size,                                # secondary
          -reveals)                                 # tertiary (fewer = harder)
 
@@ -60,7 +60,7 @@ def evil_guess(letter, candidates, revealed):
     return best, groups[best]
 
 
-# ── Rendering ─────────────────────────────────────────────────────────────────
+# -- Rendering -----------------------------------------------------------------
 
 def clr():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -97,7 +97,7 @@ def draw_alphabet(guessed, hits):
     print("  " + "  ".join(row[13:]))
 
 
-# ── Scoring ───────────────────────────────────────────────────────────────────
+# -- Scoring -------------------------------------------------------------------
 
 def calc_score(length, wrong, max_wrong, diff):
     base    = {'easy': 100, 'medium': 250, 'hard': 500, 'nightmare': 1000}[diff]

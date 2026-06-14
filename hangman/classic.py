@@ -105,11 +105,11 @@ def play(diff, pool, model, session_score, wins, played):
         pool_info = (f'Pool: {len(candidates)} words | '
                      if evil else '')
         toolbar = (
-            f'<b>Score:</b> {session_score} &nbsp;|&nbsp; '
-            f'<b>W/L:</b> {wins}/{played} &nbsp;|&nbsp; '
+            f'<b>Score:</b> {session_score}  |  '
+            f'<b>W/L:</b> {wins}/{played}  |  '
             f'{pool_info}'
             f'<b>{diff.upper()}</b>'
-            + ('&nbsp; [ENTROPY AI]' if evil else '')
+            + ('  [ENTROPY AI]' if evil else '')
         )
         raw = game_prompt(
             '\n  Guess (letter or full word): ',
