@@ -18,6 +18,7 @@ A CLI hangman game with an entropy-weighted adversarial AI, a character-level la
    - [Chronons](#chronons)
    - [Commands](#multiverse-commands)
    - [The Two Branch Types](#the-two-branch-types)
+   - [The Time Machine (`>r`)](#the-time-machine-r)
    - [What the Screen Shows](#what-the-multiverse-screen-shows)
    - [Win & Loss Conditions](#win--loss-conditions)
    - [Divergence](#divergence)
@@ -174,8 +175,8 @@ Chronons are spent on time-travel actions. You begin each game with **5 Chronons
 
 | Action | Cost |
 |--------|:----:|
-| `>b` branch (new word) | −2 |
-| `>r` rewind-branch (same word, past state) | −2 |
+| `>b` branch from NOW (new word) | −2 |
+| `>r` Time Machine (pick any past state, same or new word) | −2 |
 | `>e` echo (peek at a letter) | −1 |
 | `>s` switch, `>x` collapse, `>h` hint | free\* |
 
@@ -191,13 +192,15 @@ All commands begin with `>`. Normal letters and words are guesses in the active 
 |---------|:----:|--------------|
 | `A`–`Z` | — | Guess a letter in the active timeline |
 | `WORD` | — | Full-word guess in the active timeline |
-| `>b` | −2 ⌛ | **New-word branch** — fork from the current moment into a universe with a different word |
-| `>r` | −2 ⌛ | **Past branch** — fork from 1 guess ago in the active TL; active TL stays unchanged |
+| `>b` | −2 | **Quick branch** — fork from right now into a new universe with a different word |
+| `>r` | −2 | **Time Machine** — open a visual gallery of all past states; pick one, then choose same or different word |
 | `>s N` | free | Switch active timeline to timeline number N |
-| `>e L N` | −1 ⌛ | **Echo** — preview what letter L would do in timeline N without guessing it |
+| `>e L N` | −1 | **Echo** — preview what letter L would do in timeline N without guessing it |
 | `>x` | free | Collapse the active timeline (cannot collapse the last surviving one) |
-| `>h` | −1 ❌ | Hint — force-reveal one letter (one per timeline, costs a wrong guess) |
+| `>h` | free* | Hint — force-reveal one letter (one per timeline, costs a wrong guess not a chronon) |
 | `>?` | free | Show the in-game help screen |
+
+\* Hint costs 1 wrong guess in the active timeline, not a chronon.
 
 #### Echo compact form
 
@@ -205,41 +208,74 @@ All commands begin with `>`. Normal letters and words are guesses in the active 
 
 ### The Two Branch Types
 
-These are the two fundamentally different ways to create a new timeline:
+#### `>b` — Quick branch from now
 
-#### `>b` — New-word branch
+Instantly forks the active timeline from **the current moment** into a new universe with a **completely different hidden word**. The new timeline carries forward your current wrong count, all revealed positions, and all guessed letters — but the candidate pool is rebuilt fresh from the full nightmare word list, filtered so the new word is consistent with what you've already learned:
 
-Creates a parallel universe **from this exact moment**, carrying forward:
-- Your current wrong count
-- All revealed letter positions
-- All previously guessed letters
+- Positions you've revealed must hold the same letters.
+- Letters that were misses cannot appear in the new word.
 
-But chasing a **completely different hidden word**. The new timeline's candidate pool is rebuilt fresh from the nightmare word list, then filtered to be consistent with your guesses so far:
-- Letters you revealed must appear at those positions in the new word.
-- Letters that were misses cannot appear anywhere in the new word.
+**When to use**: When you want to hedge quickly — the constraints transfer over, but the rest of the word is free to differ.
 
-This means you get genuine divergence — the new word satisfies all the same constraints but is otherwise free to be entirely different.
+#### `>r` — The Time Machine
 
-**When to use**: When you've made progress (revealed some letters) and want to hedge your bets — the revealed letters are guaranteed to be in both words, but the rest of the word will differ.
+Opens a **visual gallery** showing every past state of the active timeline as a panel with the gallows drawing, the word pattern, wrong-guess count, and what was guessed at that step. The active timeline is never touched.
 
-#### `>r` — Past branch (rewind-branch)
+```
+  TL-A  --  Time Machine  (4 past states | pick one to branch from)
 
-Creates a new timeline forked from **1 guess ago** in the active timeline. The active TL is completely untouched. The new timeline inherits:
-- The candidate pool as it was before the last guess (same word being chased)
-- The game state as it was before the last guess (one fewer wrong, no last reveal)
+  +------ [0] ------+  +------ [1] ------+  +------ [2] ------+  +------ [3] ------+
+  |    +---+        |  |    +---+        |  |    +---+        |  |    +---+        |
+  |    |   |        |  |    |   |        |  |    |   |        |  |    |   |        |
+  |        |        |  |    O   |        |  |    O   |        |  |    O   |        |
+  |        |        |  |        |        |  |    |   |        |  |   /|\  |        |
+  |        |        |  |        |        |  |        |        |  |        |        |
+  |    =========   |  |    =========   |  |    =========   |  |    =========   |
+  |                 |  |                 |  |                 |  |                 |
+  |  _ _ _ _ _ _   |  |  _ _ _ _ _ _   |  |  _ _ _ _ _ _   |  |  _ _ _ _ _ _   |
+  |  wrong: 0/5     |  |  wrong: 1/5     |  |  wrong: 2/5     |  |  wrong: 3/5     |
+  |  start          |  |  E: MISS        |  |  T: MISS        |  |  A: MISS        |
+  +-----------------+  +-----------------+  +-----------------+  +-----------------+
 
-This lets you explore "what if I had guessed differently 1 step ago" without losing your current progress in the active TL.
+  Pick step to branch from [0-3] (Enter = cancel): _
+```
 
-**When to use**: After a miss — spin off a branch at the earlier state and try a different letter there, while the active TL continues forward.
+After picking a step you choose the branch type:
 
-#### Comparison table
+```
+  Branch type for step 2:
+  [s]  Same word   -- chase the same word from that past state
+  [d]  New word    -- fresh candidate pool, same player state at step 2
 
-| | `>b` new-word branch | `>r` past branch |
+  [s/d] (Enter = cancel): _
+```
+
+- **Same word (`s`)**: The new timeline resumes from the chosen past state with the same candidate pool that existed then. Use this to retry a different letter from an earlier point without losing your current TL's progress.
+- **New word (`d`)**: The new timeline starts from the chosen past state but with a freshly filtered candidate pool — a different word that still satisfies all constraints known at that step.
+
+**When to use `>r` over `>b`**: When you want control over *which* past moment to fork from, not just the present. After several misses, you can jump back to an early clean state and try a completely different guessing strategy.
+
+#### Comparison
+
+| | `>b` quick branch | `>r` time machine |
 |--|--|--|
-| Word | Different (fresh pool) | Same (same candidates) |
-| State | Current (as of right now) | 1 guess ago |
+| Branch point | Always right now | Any past state you pick |
+| Word | Always different | Your choice: same or different |
 | Active TL | Unchanged | Unchanged |
-| Best for | Hedging on a reveal | Recovering from a bad guess |
+| Chronon cost | −2 | −2 |
+| Best for | Fast hedging | Strategic replays from any past moment |
+
+### The Time Machine (`>r`)
+
+The Time Machine is the most powerful tool in multiverse mode. Here is a step-by-step walkthrough:
+
+1. Type `>r` in any active timeline that has at least one guess in its history.
+2. The screen clears and shows every past state as a side-by-side panel gallery (or a compact table if Rich is not installed). Each panel shows the gallows at that moment, the word pattern, the wrong-guess count, and the letter that was guessed from that state.
+3. Type a step number to select that state, or press Enter to cancel (no chronons are spent on a cancel).
+4. Choose `s` (same word) or `d` (different word).
+5. A new timeline is created. The active timeline is completely unchanged.
+
+The gallery always includes a `[now]` panel showing the current live state, so you can compare it against historical states before deciding. You cannot branch from `[now]` via `>r` — use `>b` for that.
 
 ### What the Multiverse Screen Shows
 
@@ -269,7 +305,7 @@ This lets you explore "what if I had guessed differently 1 step ago" without los
   A  B  C  D  E  F  G  H  I  J  K  L  M
   N  O  P  Q  R  S  T  U  V  W  X  Y  Z
 
-  >b new-word-branch(-2)  >r past-branch(-2)  >s N switch  >e L N echo(-1)  >x collapse  >h hint  >?
+  >b branch(-2)  >r time-machine(-2)  >s N switch  >e L N echo(-1)  >x collapse  >h hint  >?
 
   TL-B > _
 ```
@@ -430,16 +466,17 @@ HangMan/
     ├── model.py            ← CharNgramModel, _train_model(), load_word_pool()
     ├── engine.py           ← adversarial AI, rendering helpers, scoring
     ├── classic.py          ← classic single-player game loop
-    ├── multiverse.py       ← Timeline class, multiverse game loop
+    ├── multiverse.py       ← Timeline class, time machine, multiverse game loop
+    ├── ui.py               ← optional Rich + prompt_toolkit layer
     └── cli.py              ← mode/difficulty menus, main()
 ```
 
 **Module dependency order** (no circular imports):
 ```
 colors  ←  words  ←  model
-                  ←  engine  ←  classic
-                             ←  multiverse
-                                         ←  cli
+                  ←  engine  ←  classic   ←  cli
+                             ←  ui
+                             ←  multiverse ←  cli
 ```
 
 ---
@@ -478,17 +515,18 @@ End-game:  collapse dead timelines with >x to keep the scoreboard clean
 
 Spending all 5 chronons earns ×1.25 on your final score — don't hoard them.
 
-### Multiverse — Branch vs. Rewind
+### Multiverse — Branch vs. Time Machine
 
-**Branch (`>b`)** is best when:
-- You've revealed several letters and want a second shot at a different word with those constraints baked in.
-- You want to maximise the timeline count for the score multiplier.
-- The active TL's pool has shrunk to a difficult set of words.
+**Quick branch (`>b`)** is best when:
+- You want to fork immediately without thinking about which past state to pick.
+- You've made progress (revealed letters, narrowed the pool) and want a parallel universe with those same constraints but a fresh word.
+- You need a second timeline fast to hit the timeline multiplier.
 
-**Rewind-branch (`>r`)** is best when:
-- You just got a miss on a letter you wish you hadn't guessed.
-- You want to try a different letter from 1 step ago in a safe copy.
-- The active TL still has many candidates — forking at an earlier state keeps more options open.
+**Time Machine (`>r`)** is best when:
+- You want to replay from a specific earlier state — not just 1 step back but any step.
+- You just had a run of misses and want to restart from before they happened.
+- You want to branch with the *same* word to try a different letter path rather than getting a new word entirely.
+- You have time and chronons to think strategically: inspect the gallery, pick the cleanest state, choose same/different word deliberately.
 
 ### Multiverse — Echo Strategy
 
