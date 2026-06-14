@@ -4,7 +4,7 @@ import random
 from collections import Counter
 
 from .colors import C
-from .words import MAX_WRONG
+from .words import MAX_WRONG, STAGES
 from .engine import (
     clr, draw_gallows, draw_word, draw_alphabet,
     calc_score, show_word_analysis, evil_guess,
@@ -44,7 +44,7 @@ class Timeline:
         self.num, self.label = Timeline._alloc()
         self.candidates = list(candidates)
         self.max_wrong  = max_wrong
-        self.history    = []       # undo stack -- each entry is a full state snapshot
+        self.history    = []       # list of state snapshots (one per guess)
         self.echo_log   = set()    # letters already echoed in this TL (one-shot)
         self.alive      = True
 
@@ -72,14 +72,22 @@ class Timeline:
         return self.wrong >= self.max_wrong
 
     def snapshot(self):
-        """Push current state onto the undo stack before each guess."""
+        """Push current state onto the history stack before each guess."""
         self.history.append({
             'candidates': list(self.candidates),
             'revealed':   dict(self.revealed),
             'guessed':    set(self.guessed),
             'hits':       set(self.hits),
             'wrong':      self.wrong,
+            'guess':      None,   # filled by record_guess() after applying the guess
+            'hit':        None,
         })
+
+    def record_guess(self, guess, hit):
+        """Annotate the most recent snapshot with what was guessed and whether it hit."""
+        if self.history:
+            self.history[-1]['guess'] = guess
+            self.history[-1]['hit']   = hit
 
     def state_dict(self):
         return {
@@ -119,6 +127,153 @@ def _branch_pool(nightmare_pool, word_len, parent):
     if filtered:
         return filtered
     return [(w, c) for w, c in nightmare_pool if len(w) == word_len]
+
+
+def _branch_pool_from_snap(nightmare_pool, word_len, snap):
+    """Like _branch_pool but takes a snapshot dict instead of a Timeline."""
+    misses   = snap['guessed'] - snap['hits']
+    revealed = snap['revealed']
+    filtered = [
+        (w, c) for w, c in nightmare_pool
+        if len(w) == word_len
+        and all(w[pos] == letter for pos, letter in revealed.items())
+        and not any(m in w for m in misses)
+    ]
+    return filtered if filtered else [(w, c) for w, c in nightmare_pool if len(w) == word_len]
+
+
+def _history_picker(tl, word_len):
+    """
+    Show all past states of a timeline as a visual gallery and let the player
+    choose which state to branch from.
+
+    With Rich: renders each state as a Panel containing the gallows + word +
+    guess result, displayed side-by-side using Columns.
+    Without Rich: compact ANSI table.
+
+    Returns the chosen history snapshot dict, or None if cancelled.
+    """
+    clr()
+
+    if not tl.history:
+        print(f"\n  {C.YLW}No history yet in TL-{tl.label} -- make a guess first.{C.RST}")
+        input(f"  {C.DIM}[Enter]{C.RST}")
+        return None
+
+    print(f"\n  {C.MAG}{C.BLD}TL-{tl.label}  --  Time Machine{C.RST}  "
+          f"{C.DIM}({len(tl.history)} past states | pick one to branch from){C.RST}\n")
+
+    # Build list: all history snapshots + a pseudo-entry for the current live state
+    current_snap = {
+        'candidates': list(tl.candidates),
+        'revealed':   dict(tl.revealed),
+        'guessed':    set(tl.guessed),
+        'hits':       set(tl.hits),
+        'wrong':      tl.wrong,
+        'guess':      None,
+        'hit':        None,
+        '_current':   True,
+    }
+    all_states = tl.history + [current_snap]
+
+    def _gallows_frame(wrong):
+        stage = min(round(wrong / tl.max_wrong * 6), 6)
+        return STAGES[stage]
+
+    def _pattern_str(revealed):
+        return ' '.join(revealed.get(p, '_') for p in range(word_len))
+
+    if HAS_RICH and console is not None:
+        from rich.columns import Columns
+        from rich.panel import Panel
+        from rich.text import Text
+
+        panels = []
+        for i, snap in enumerate(all_states):
+            is_current = snap.get('_current', False)
+            content    = Text()
+
+            # Gallows
+            frame = _gallows_frame(snap['wrong'])
+            wrong_pct = snap['wrong'] / tl.max_wrong
+            gal_style = ('bold red'  if wrong_pct >= 1.0 else
+                         'red'       if wrong_pct >= 0.6 else
+                         'yellow'    if wrong_pct >= 0.3 else 'green')
+            content.append(frame.rstrip(), style=gal_style)
+            content.append('\n\n')
+
+            # Word pattern
+            for p in range(word_len):
+                if p in snap['revealed']:
+                    content.append(snap['revealed'][p], style='bold white')
+                else:
+                    content.append('_', style='dim')
+                if p < word_len - 1:
+                    content.append(' ')
+            content.append(f"\nwrong: {snap['wrong']}/{tl.max_wrong}\n", style='dim')
+
+            # Guess annotation
+            g, h = snap.get('guess'), snap.get('hit')
+            if is_current:
+                content.append('(current)', style='bold cyan')
+            elif g:
+                content.append(f'{g}: ', style='bold')
+                content.append('HIT' if h else 'MISS',
+                               style='bold green' if h else 'bold red')
+            else:
+                content.append('start', style='dim')
+
+            label        = '[now]' if is_current else f'[{i}]'
+            border_style = ('bold cyan' if is_current else
+                            'cyan'      if i == 0     else 'white')
+            panels.append(Panel(content, title=label, border_style=border_style,
+                                expand=False))
+
+        console.print(Columns(panels, equal=False, expand=False))
+
+    else:
+        # ANSI fallback: one row per state
+        col_w = word_len * 2 + 2
+        print(f"  {C.DIM}{'Step':<6}{'Bar':<10}{'Wrong':<7}{'Pattern':<{col_w}}Guessed{C.RST}")
+        print(f"  {'-' * 55}")
+
+        for i, snap in enumerate(all_states):
+            is_current = snap.get('_current', False)
+            pat    = _pattern_str(snap['revealed'])
+            filled = round(snap['wrong'] / tl.max_wrong * 6)
+            bc     = C.RED if filled >= 4 else C.YLW if filled >= 2 else C.GRN
+            bar    = f"[{bc}{'#'*filled}{C.DIM}{'-'*(6-filled)}{C.RST}]"
+            g, h   = snap.get('guess'), snap.get('hit')
+
+            if is_current:
+                lbl   = f"{C.BLD}{C.CYN}[now]{C.RST}"
+                g_str = f"{C.CYN}(current){C.RST}"
+            else:
+                lbl = f"{C.CYN}[{i}]{C.RST}"
+                if g:
+                    g_str = (f"{C.GRN}{g}: HIT{C.RST}" if h
+                             else f"{C.RED}{g}: MISS{C.RST}")
+                else:
+                    g_str = f"{C.DIM}start{C.RST}"
+
+            print(f"  {lbl:<5}  {bar}  {snap['wrong']}/{tl.max_wrong}   "
+                  f"{pat:<{col_w}}  {g_str}")
+
+        print(f"  {'-' * 55}")
+
+    # Input: pick a history step (NOT the current state)
+    n = len(tl.history)
+    while True:
+        raw = input(f"\n  Pick step to branch from [0-{n-1}] (Enter = cancel): ").strip()
+        if not raw:
+            return None
+        try:
+            idx = int(raw)
+            if 0 <= idx < n:
+                return tl.history[idx]
+            print(f"  {C.RED}Enter a number from 0 to {n-1}.{C.RST}")
+        except ValueError:
+            print(f"  {C.RED}Enter a number.{C.RST}")
 
 
 def _mv_overview(timelines, active_idx, chronons, word_len, wins=0, played=0):
@@ -179,18 +334,18 @@ def _mv_help():
   {C.WHT}[letter]      {C.RST}Guess a letter in the ACTIVE timeline
   {C.WHT}[word]        {C.RST}Full-word guess in the active timeline
 
-  {C.MAG}>b            {C.RST}Branch  -- spawn a parallel universe RIGHT NOW.
-                  New TL inherits your wrong-count and revealed
-                  letters, but chases a DIFFERENT word.  {C.DIM}(-2 chronons){C.RST}
+  {C.MAG}>b            {C.RST}Branch -- fork RIGHT NOW into a new universe.
+                  Same player state, DIFFERENT word.  {C.DIM}(-2 chronons){C.RST}
 
-  {C.CYN}>r            {C.RST}Rewind  -- spawn a NEW timeline branched from 1 guess
-                  ago in the active TL.  Active TL stays unchanged.
-                  Same word pool, earlier state.  {C.DIM}(-2 chronons){C.RST}
+  {C.CYN}>r            {C.RST}Time Machine -- browse ALL past states of the
+                  active timeline, pick one, then choose:
+                    (s) same word  /  (d) different word
+                  The active TL is never changed.  {C.DIM}(-2 chronons){C.RST}
 
-  {C.WHT}>s N          {C.RST}Switch  -- make timeline N the active one  (free)
-  {C.WHT}>e L N        {C.RST}Echo    -- peek: what would happen if you guessed letter
-                  L in timeline N?  Reports HIT/MISS + pool change.
-                  Each letter can only be echoed once per TL.  {C.DIM}(-1 chronon){C.RST}
+  {C.WHT}>s N          {C.RST}Switch -- make timeline N the active one  (free)
+  {C.WHT}>e L N        {C.RST}Echo   -- peek: what would guessing L do in TL N?
+                  Reports HIT/MISS + pool change.  Once per letter/TL.
+                  {C.DIM}(-1 chronon){C.RST}
   {C.WHT}>x            {C.RST}Collapse -- abandon the active timeline  (free)
   {C.WHT}>h            {C.RST}Hint    -- force-reveal one letter  (costs 1 wrong guess)
   {C.WHT}>?            {C.RST}Show this help screen
@@ -300,7 +455,7 @@ def play_multiverse(pool, model, session_score, wins, played):
         print(f"  Guesses left: {rc}{rem}{C.RST}\n")
         draw_word(tl.revealed, word_len)
         draw_alphabet(tl.guessed, tl.hits)
-        print(f"\n  {C.DIM}>b new-word-branch(-2)  >r past-branch(-2)  >s N switch  "
+        print(f"\n  {C.DIM}>b branch(-2)  >r time-machine(-2)  >s N switch  "
               f">e L N echo(-1)  >x collapse  >h hint  >? help{C.RST}")
 
         ch_str = '*' * chronons + '.' * max(0, 5 - chronons)
@@ -326,7 +481,7 @@ def play_multiverse(pool, model, session_score, wins, played):
             if cmd in ('?', 'HELP'):
                 _mv_help()
 
-            # >b -- new parallel universe: same state, fresh word
+            # >b -- quick branch from NOW: same state, fresh word
             elif cmd == 'B':
                 if chronons < 2:
                     flash(f"{C.RED}Need 2 chronons to branch (have {chronons}).{C.RST}")
@@ -338,33 +493,50 @@ def play_multiverse(pool, model, session_score, wins, played):
                     timelines.append(new_tl)
                     chronons -= 2
                     flash(f"{C.MAG}Branched!{C.RST}  "
-                          f"TL-{new_tl.label} forked from TL-{tl.label}.  "
+                          f"TL-{new_tl.label} forked from TL-{tl.label} right now.  "
                           f"Same player state, DIFFERENT word.  "
                           f"{C.DIM}Pool: {len(new_pool)} candidates.  "
                           f"(-2 chronons -> {chronons} left){C.RST}")
 
-            # >r -- time-branch from 1 guess ago: same word, earlier state
+            # >r -- Time Machine: pick any past state, choose same/different word
             elif cmd == 'R':
                 if chronons < 2:
-                    flash(f"{C.RED}Need 2 chronons to time-branch (have {chronons}).{C.RST}")
+                    flash(f"{C.RED}Need 2 chronons to time-travel (have {chronons}).{C.RST}")
                 elif len(timelines) >= 4:
                     flash(f"{C.RED}Multiverse at capacity -- max 4 timelines.{C.RST}")
                 elif not tl.history:
-                    flash(f"{C.YLW}TL-{tl.label} has no history yet.{C.RST}")
+                    flash(f"{C.YLW}TL-{tl.label} has no history yet -- make a guess first.{C.RST}")
                 else:
-                    snap   = tl.history[-1]    # peek -- current TL stays unchanged
-                    new_tl = Timeline(list(snap['candidates']), max_wrong, state={
-                        'wrong':    snap['wrong'],
-                        'revealed': dict(snap['revealed']),
-                        'guessed':  set(snap['guessed']),
-                        'hits':     set(snap['hits']),
-                    })
-                    timelines.append(new_tl)
-                    chronons -= 2
-                    flash(f"{C.CYN}Time-branch!{C.RST}  "
-                          f"TL-{new_tl.label} forked from 1 guess ago in TL-{tl.label}.  "
-                          f"Same word, earlier state -- TL-{tl.label} is untouched.  "
-                          f"{C.DIM}(-2 chronons -> {chronons} left){C.RST}")
+                    snap = _history_picker(tl, word_len)
+                    if snap is not None:
+                        step_idx = tl.history.index(snap)
+                        print(f"\n  {C.CYN}Branch type for step {step_idx}:{C.RST}")
+                        print(f"  {C.GRN}[s]{C.RST}  Same word   -- chase the same word from that past state")
+                        print(f"  {C.MAG}[d]{C.RST}  New word    -- fresh candidate pool, same player state at step {step_idx}")
+                        bt = input(f"\n  [s/d] (Enter = cancel): ").strip().lower()
+                        if bt in ('s', 'd'):
+                            snap_state = {
+                                'wrong':    snap['wrong'],
+                                'revealed': dict(snap['revealed']),
+                                'guessed':  set(snap['guessed']),
+                                'hits':     set(snap['hits']),
+                            }
+                            if bt == 's':
+                                new_tl     = Timeline(list(snap['candidates']), max_wrong,
+                                                      state=snap_state)
+                                word_desc  = 'same word'
+                                pool_size  = len(snap['candidates'])
+                            else:
+                                new_pool   = _branch_pool_from_snap(nightmare_pool, word_len, snap)
+                                new_tl     = Timeline(new_pool, max_wrong, state=snap_state)
+                                word_desc  = 'new word'
+                                pool_size  = len(new_pool)
+                            timelines.append(new_tl)
+                            chronons -= 2
+                            flash(f"{C.CYN}Time-travel!{C.RST}  "
+                                  f"TL-{new_tl.label} spawned from step {step_idx} of TL-{tl.label}.  "
+                                  f"{word_desc}, pool: {pool_size}.  "
+                                  f"{C.DIM}(-2 chronons -> {chronons} left){C.RST}")
 
             # >s N -- switch active timeline
             elif cmd.startswith('S'):
@@ -436,6 +608,7 @@ def play_multiverse(pool, model, session_score, wins, played):
                 elif tl.candidates:
                     unrevealed = [i for i in range(word_len) if i not in tl.revealed]
                     if unrevealed:
+                        tl.snapshot()
                         pos    = random.choice(unrevealed)
                         letter = Counter(
                             w[pos] for w, _ in tl.candidates
@@ -447,6 +620,7 @@ def play_multiverse(pool, model, session_score, wins, played):
                         tl.hits.add(letter)
                         tl.guessed.add(letter)
                         tl.wrong += 1
+                        tl.record_guess(f'HINT:{letter}', True)
                         hint_used.add(tl.num)
 
             else:
@@ -456,7 +630,8 @@ def play_multiverse(pool, model, session_score, wins, played):
         elif len(raw) > 1 and raw.isalpha():
             tl.snapshot()
             target_word = tl.candidates[0][0] if tl.candidates else ''
-            if raw == target_word:
+            matched     = (raw == target_word)
+            if matched:
                 for i, ch in enumerate(raw):
                     tl.revealed[i] = ch
                     tl.hits.add(ch)
@@ -465,6 +640,7 @@ def play_multiverse(pool, model, session_score, wins, played):
                 filtered = [(w, c) for w, c in tl.candidates if w != raw]
                 if filtered:
                     tl.candidates = filtered
+            tl.record_guess(raw, matched)
 
         # -- Single letter guess -----------------------------------------------
         elif len(raw) == 1 and raw.isalpha():
@@ -477,8 +653,10 @@ def play_multiverse(pool, model, session_score, wins, played):
                 for p in positions:
                     tl.revealed[p] = raw
                 tl.hits.add(raw)
+                tl.record_guess(raw, True)
             else:
                 tl.wrong += 1
+                tl.record_guess(raw, False)
 
             # Divergence notice: same letter gave different outcomes across TLs
             this_hit = raw in tl.hits
